@@ -19,7 +19,7 @@ Engine Size: Araçların motor hacimleri
 
 Cylinders: Araçların motorlarında kaç silindir olduğu bilgisi
 
-Transmission: Araçların şanzıman tipi ve vites sayısı (bu değişken parçalanarak (transmissiontype isimli yeni bir değişken oluşturulmuştur, bu değişkende araçların yalnızca şanzıman tipi değerleri bulunmaktadır.)
+Transmission: Araçların şanzıman tipi ve vites sayısı (Bu değişken parçalanarak transmissiontype isimli yeni bir değişken oluşturulmuştur, bu değişkende araçların yalnızca şanzıman tipi değerleri bulunmaktadır).
 
 Fuel type: Araçların yakıt tipi: x:hibrit z:benzin e: elektrikli d:dizel
 
