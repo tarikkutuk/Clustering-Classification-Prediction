@@ -1,0 +1,28 @@
+{
+    "id": "57F8FEF4",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1656504398603.0,
+    "source_on_save": false,
+    "relative_order": 9,
+    "properties": {
+        "id": "67ecd90fb87c4ca3b7465b27f319d163",
+        "name": "km_result",
+        "title": "km_result",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2462401594561542690,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1656504398603,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -1,0 +1,50 @@
+vehicle class:
+0. compact
+1. full-size
+2. mid-size
+3. minicompact
+4. minivan
+5. pickup truck: small
+6. pickup truck: standart
+7. special purpose vehicle
+8. station wagon: mid-size
+9. station wagon: small
+10. subcompact
+11. SUV: small
+12. SUV: standart
+
+transmission:
+0: A10
+1: A6
+2: A7
+3: A8
+4: A9
+5: AM6
+6: AM7
+7: AM8
+8: AS10
+9: AS5
+10: AS6
+11: AS7
+12. AS8
+13: AS9
+14: AV
+15: AV1
+16: AV10
+17: AV6
+18: AV7
+19: AV8
+20: M5
+21: M6
+22: M7
+
+fuel type:
+1: hibrit(x)
+2: benzin(z)
+
+transmissiyonType:
+0: A
+1: AM
+2: AS
+3: AV
+4: M

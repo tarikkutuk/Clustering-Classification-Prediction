@@ -1,0 +1,7 @@
+"0","scatter1<-ggplot(data, aes(data$`Fuel Consumption (City (L/100 km)`,data$`Fuel Consumption(Hwy (L/100 km))`, color=data$`Fuel Type`))+"
+"0","  geom_point(size=1,alpha=0.8)+"
+"0","  geom_smooth(method = ""lm"", col=""green"",se = FALSE)+"
+"0","  labs(title = ""Şehir içi ve şehir dışı yakıt tüketimi saçılım grafiği"", x=""şehir içi"", y=""şehir dışı"")"
+"0","ggplotly(scatter1)"
+"2","`geom_smooth()` using formula 'y ~ x'
+"

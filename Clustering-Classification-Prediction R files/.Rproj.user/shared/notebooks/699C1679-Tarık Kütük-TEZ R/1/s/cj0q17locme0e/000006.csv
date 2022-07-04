@@ -1,0 +1,4 @@
+"0","ggplot(data, aes(y=data$`Fuel Consumption(Comb (L/100 km))`, x=factor(data$`Fuel Type`),fill=data$`Fuel Type`))+"
+"0","  geom_boxplot()+"
+"0","  labs(title = ""Yakıt tipine göre ortalama yakıt tüketimi"", x=""Yakıt tipi"", y=""Ortalama yakıt tüketimi"")"
+"0",""

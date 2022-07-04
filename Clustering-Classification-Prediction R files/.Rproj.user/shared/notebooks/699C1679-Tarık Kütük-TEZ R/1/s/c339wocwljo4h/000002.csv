@@ -1,0 +1,8 @@
+"0","data3<-data[,-c(6,8,9,11)]"
+"0","colnames(data3)= c(""Make"",""Model"",""VehicleClass"",""EngineSize"",""Cylinders"",""FuelType"",""FuelConsComp"",""CO2Emission"",""CO2Rating"",""SmogRating"",""TransmissionType"")"
+"0",""
+"0","set.seed(17051999)"
+"0","trainIndex<-sample(1:nrow(data3),size = round(0.7*nrow(data3)), replace = FALSE)"
+"0","train_data<-data3[trainIndex,]"
+"0","test_data<-data3[-trainIndex,]"
+"0",""

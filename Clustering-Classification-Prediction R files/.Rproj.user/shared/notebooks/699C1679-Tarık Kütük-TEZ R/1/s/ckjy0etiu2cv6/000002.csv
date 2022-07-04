@@ -1,0 +1,1 @@
+"0","tree2<-rpart( FuelType~ VehicleClass+ EngineSize+ Cylinders+ FuelConsComp+ CO2Emission+ CO2Rating+ SmogRating+ TransmissionType, data = train_data, method = ""class"")"

@@ -1,0 +1,5 @@
+"0","ggplot(data,aes(data$`Fuel Consumption(Hwy (L/100 km))`))+"
+"0","  labs(title=""Şehir dışı yakıt tüketimi"")+"
+"0","  geom_histogram(fill=""steelblue"",colour=""black"", alpha=0.6, title=""Motor Hacmi"")"
+"2","`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+"

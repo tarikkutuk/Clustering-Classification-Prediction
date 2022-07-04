@@ -1,0 +1,572 @@
+---
+  title: "Tarık Kütük 20181101048 TEZ"
+author: "Tarık Kütük"
+date: "12 06 2022"
+output: html_document
+---
+  
+  # EDA ve Giriş
+  
+  ```{r, include=FALSE}
+library(PerformanceAnalytics)
+library(readxl)
+library(rattle)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(tidyverse)
+library(corrplot)
+library(matlib)
+library(funModeling)
+library(openxlsx)
+library(stringr)
+library(DescTools)
+library(dendextend) 
+library(haven)
+library(factoextra)
+library(cluster)
+library(plotly)
+library(haven)
+library(dendextend)
+library(GGally)
+library(superml)
+library(rpart)
+library(rpart.plot)
+library(caret)
+```
+
+```{r}
+data <- read_excel("C:/Users/tarik/Desktop/okul/tez2/MY2022 Fuel Consumption Ratings.xlsx")
+data<-as.data.frame(data)
+
+data$Make<-as.factor(data$Make)
+data$`Vehicle Class`<-as.factor(data$`Vehicle Class`)
+data$Transmission<-as.factor(data$Transmission)
+data$`Fuel Type`<-as.factor(data$`Fuel Type`)
+
+data$TransmissionType<-str_extract(data$Transmission, "[A-Z]+")
+data$TransmissionType<-as.factor(data$TransmissionType)
+data<-data[,-1]
+summary(data)
+
+```
+
+
+Veri içeri aktarıldı. Data frame olarak tanıtıldı ve kategorik değişkenler belirtildi.
+Transmission değişkeninde 2 farklı bilgi vardı. Bu değişken parçalanarak yeni değişken oluşturuldu.
+Bu değişken araçların şanzıman tipini ifade ediyor.
+
+
+Yapılan gözlemlerde araç tipi "two-seater" olan araçların performansa yönelik araçlar olduğu görülmüştür. Performans araçlarında yakıt tüketimi önemsiz olduğu için bu araçların yakıt tüketimi değerleri uç ve aykırı değerler olarak tespit edilmiştir. Bu sebeple veriden two-seater tipindeki araçlar çıkarılacaktır.
+
+
+```{r}
+two_seater<-which(data$`Vehicle Class` =="Two-seater")
+data<-data[-two_seater,]
+data2<-data
+```
+
+## Değişkenleri inceleme
+
+Yapılan incelemede sadece elektrikli ve sadece dizel araç üretimi, benzinli ve hibrit araçlara göre oldukça azdır. Analizlerde yakıt tipi değişkeni kullanılacağından algoritmada yanlılığa sebep olmaması için elektrikli ve dizel araçlar veriden çıkarılacaktır.
+
+
+```{r}
+diesel<-which(data$`Fuel Type`=="D")
+data<-data[-diesel,]
+electric<-which(data$`Fuel Type`=="E")
+data<-data[-electric,]
+data2<-data
+summary(data)
+```
+
+
+```{r, warning=FALSE}
+freq(data[,-c(1,2)])
+```
+
+
+
+### Şehir İçi Yakıt Tüketimi
+
+```{r, warning=FALSE}
+ggplot(data,aes(data$`Fuel Consumption (City (L/100 km)`))+
+  labs(title="Şehir içi yakıt tüketimi")+
+  geom_histogram(fill="steelblue",colour="black", alpha=0.6, title="Motor Hacmi")
+```
+
+Şehir içi yakıt tüketimi histogramı verilmiştir. Değişkenin yaklaşık normal dağıldığı söylenebilir. Araçlar şehir içinde ortalama 12.27 litre yakıt yaktığı görülmüştür.
+
+```{r}
+summary(data$`Fuel Consumption (City (L/100 km)`)
+```
+
+
+```{r, warning=FALSE}
+ggplot(data, aes(y=data$`Fuel Consumption (City (L/100 km)`, x=factor(data$`Fuel Type`),fill=data$`Fuel Type`))+
+  geom_boxplot()+
+  labs(title = "Yakıt tipine göre şehir içi yakıt tüketimi", x="Yakıt tipi", y="Şehir içi yakıt tüketimi")
+```
+
+Yakıt tiplerine göre ("x" hibrit, "z" benzin) şehir içi yakıt tüketimi kutu çizimi verilmiştir.
+Benzinli araçların hibritlere göre yakıt tüketiminin daha yüksek olduğu yorumu yapılabilir. Bunun yanında iki grubun da yayılımının yakın olduğu söylenebilir. 
+
+
+### Şehir Dışı Yakıt Tüketimi
+
+
+```{r, warning=FALSE}
+ggplot(data,aes(data$`Fuel Consumption(Hwy (L/100 km))`))+
+  labs(title="Şehir dışı yakıt tüketimi")+
+  geom_histogram(fill="steelblue",colour="black", alpha=0.6, title="Motor Hacmi")
+```
+
+Şehir dışı yakıt tüketimi histogramı verilmiştir. Gözlemler 6 litre ve 10 litre civarında yoğunluk gösterdiği görülmüştür.
+
+
+```{r}
+summary(data$`Fuel Consumption(Hwy (L/100 km))`)
+```
+
+Araçların şehir dışı yakıt tüketiminin ortalama 9.2 lt olduğu görülmüştür.
+
+
+```{r,warning=FALSE}
+ggplot(data, aes(y=data$`Fuel Consumption(Hwy (L/100 km))`, x=factor(data$`Fuel Type`),fill=data$`Fuel Type`))+
+  geom_boxplot()+
+  labs(title = "Yakıt tipine göre şehir dışı yakıt tüketimi", x="Yakıt tipi", y="Şehir içi yakıt tüketimi")
+```
+
+Yakıt tiplerine göre şehir dışı yakıt tüketimi kutu çizimleri verilmiştir. Şehir dışı değerlerinde de benzinli araçların hibritlere göre yakıt tüketiminin daha fazla olduğu görülmüştür. Fakat bu sefer iki grubun da sağa çarpık olduğu, benzinli grubun ise yayılımının, hibrit gruba göre oldukça az olduğu görülmüştür. İki grup arasındaki fark ise şehir dışı yakıt tüketimine göre azalmıştır. Bunun yanında iki grubun da yakıt tüketimi şehir içine göre azalmıştır. İki grupta da birer tane aykırı değer burada da göze çarpmaktadır. 
+
+### Şehir İçi ve Şehir Dışı arasındaki ilişki
+
+```{r, warning=FALSE}
+scatter1<-ggplot(data, aes(data$`Fuel Consumption (City (L/100 km)`,data$`Fuel Consumption(Hwy (L/100 km))`, color=data$`Fuel Type`))+
+  geom_point(size=1,alpha=0.8)+
+  geom_smooth(method = "lm", col="green",se = FALSE)+
+  labs(title = "Şehir içi ve şehir dışı yakıt tüketimi saçılım grafiği", x="şehir içi", y="şehir dışı")
+ggplotly(scatter1)
+```
+Şehir içi ve şehir dışı yakıt tüketimi saçılım grafiği verilmiştir. Değişkenler arasındaki doğrusal ilişki göze çarpmaktadır. Bunun yanında şehir içi yakıt tüketimi 22 lt, şehir dışı yakıt tüketimi 16.5 lt olan bir gözlemin burada da uç değer olduğu görülmektedir. 
+
+
+### Ortalama Yakıt Tüketimi
+
+```{r,warning=FALSE}
+ggplot(data,aes(data$`Fuel Consumption(Comb (L/100 km))`))+
+  labs(title="Ortalama yakıt tüketimi")+
+  geom_histogram(fill="steelblue",colour="black", alpha=0.6)
+```
+
+Ortalama yakıt tüketimi histogramı verilmiştir. Araçların ortalama yakıt tüketiminin 7.5-12.5 lt civarında bir yoğunluğa sahip olduğu söylenebilir. Yaklaşık normal dağılım gösterdiği söylenebilir. Uç değer burada da göze çarpmaktadır. 
+
+```{r, warning=FALSE}
+ggplot(data, aes(y=data$`Fuel Consumption(Comb (L/100 km))`, x=factor(data$`Fuel Type`),fill=data$`Fuel Type`))+
+  geom_boxplot()+
+  labs(title = "Yakıt tipine göre ortalama yakıt tüketimi", x="Yakıt tipi", y="Ortalama yakıt tüketimi")
+
+```
+
+Beklenildiği üzere ortalama yakıt tüketiminde de benzinli araçların hibritlere göre daha yüksek yakıt tüketimine sahip olduğu anlaşılmaktadır. Hibrit grubun ortalama yakıt tüketimi yayılımı, benzinli gruba göre daha fazla olduğu görülmüştür.
+Benzinli grubun, hibrit gruba göre daha fazla sağa çarpık olduğu ve bu gruptaki aykırı gözlemin varlığının devam ettiği görülmüştür.
+
+```{r, warning=FALSE}
+ggplot(data, aes(y=data$`Fuel Consumption(Comb (L/100 km))`, x=factor(data$TransmissionType),fill=data$TransmissionType))+
+  geom_boxplot()+
+  labs(title = "Şanzıman tipine göre ortalama yakıt tüketimi", x="Şanzıman tipi", y="Ortalama yakıt tüketimi")
+```
+
+Şanzıman tipine göre ortalama yakıt tüketimi kutu grafikleri verilmiştir (A: otomatik, AM: yarı-otomatik, AS: sıralı, AV: CVT, M: manuel).
+
+Otomatik şanzımana sahip araçların ise yakıt tüketimi bakımından en yüksek değerlere sahip olduğu ve sağa çarpık bir dağılım gösterdiği yani gözlemlerin grup içerisinde 12 lt civarında yoğunlaştıklarını fakat yaklaşık 17 lt civarına kadar dağılım kuyruğunun ilerlediği anlaşılır. 19 lt'ye yakın bir uç değerin olduğu da görülmektedir.
+
+Yarı otomatik grubun ise yaklaşık normal bir dağılım gösterdiğini ve 10 lt civarında yoğunlaştığını söyleyebiliriz.
+
+Sıralı şanzıman grubunun ise sağa çarpık bir dağılım gösterdiğini ve otomatik gruptan sonra en fazla yakıt tüketimine sahip grup olduğu anlaşılmaktadır.
+
+CVT şanzımana sahip olan araçların ise en düşük yakıt tüketimine sahip olduğu 4 adet uç gözlemi olduğu ve yaklaşık normal dağıldığı görülmüştür. DAG değeri en küçük olan grup olduğu görülmüştür ki bu en az değişkenlik gösteren grup olduğu anlamına gelir. Buradan CVT şanzımanın diğer şanzıman tiplerine göre yakıt tüketiminde daha stabil değerler aldığı anlamına gelir.
+
+Manuel şanzımana sahip olan araçların ise en fazla ortalama yakıt tüketimine sahip 3. grup olduğu ve ortanca çevresinde bir yoğunlaşma olduğu görülmüştür. Diğer gruplara göre DAG değeri en yüksek olan gruptur ki bu en fazla değişkenlik gösteren grup olduğu anlamına gelir. 
+
+Değişkenler arasındaki korelasyona bakmadan önce, yukarıdaki kutu çizimleri ve histogramlarda uç değer olduğu tespit edilen gözlem incelenmelidir.
+
+```{r}
+data<-data %>% tibble::rownames_to_column(var = "index2")
+data<-data[,-1]
+data[736,]
+```
+
+
+Verideki uç olduğu tespit edilen gözlem araştırıldığında Ram markasının bu modelinin off-road performans aracı olarak geliştirdiği öğrenilmiştir. Performans araçlarında yakıt tüketimi önemsenen bir değer olmadığı için, bu araçlar veriden çıkarılmıştı. Bu sebeple bu gözlem de veriden çıkarılacaktır.
+
+Şanzıman tiplerine göre ortalama yakıt tüketimi grafiğindeki CVT şanzımanlı gözlemlerdeki uç değerler ise çıkarılmayacaktır. Bu uç değere sahip gözlem CVT şanzımana sahip araçların yayılımı çok düşük olduğu için uç değer olarak tanımlanmıştır. Yakıt tüketimi bakımından bir aykırılık söz konusu değildir.
+
+
+```{r}
+data<-data[-736,]
+```
+
+
+```{r, warning=FALSE}
+data<-data[-511,]
+ggplot(data, aes(y=data$`Fuel Consumption(Comb (L/100 km))`, x=factor(data$`Fuel Type`),fill=data$`Fuel Type`))+
+  geom_boxplot()+
+  labs(title = "Yakıt tipine göre ortalama yakıt tüketimi", x="Yakıt tipi", y="Ortalama yakıt tüketimi")
+```
+
+Görüldüğü gibi uç değer çıkarılmıştır.
+
+
+
+### Nicel değişkenler arası korelasyon
+
+Verideki nicel değişkenler ayrılacaktır.
+
+```{r}
+quantitatives<-data[,c(4,5,8,9,10,11,12,13)]
+colnames(quantitatives)[3]<-"Fuel_cons_city"
+colnames(quantitatives)[4]<-"Fuel_cons_hwy"
+colnames(quantitatives)[5]<-"Fuel_cons_comb_L"
+colnames(quantitatives)[6]<-"Fuel_cons_comb_mpg"
+```
+
+Nicel değişkenler; Motor Hacmi(L), silindir sayısı, şehir içi yakıt tüketimi(L), şehir dışı yakıt tüketimi(L), Şehir içi ve şehir dışı ortalama yakıt tüketimi(L) (%55 şehir içi, %45 şehir dışı), şehir içi ve şehir dışı ortalama yakıt tüketimi (mpg), karbondioksit emisyonu(g/km) ve karbondioksit değerlendirme puanı.
+
+
+```{r}
+corr_quan<-corrplot(cor(quantitatives, method = "kendall"), method="number")
+```
+
+
+Değişkenlerin parametrik olmayan korelasyon matrisi verilmiştir. Değişkenlerin normal dağılmaması durumundan dolayı Kendall korelasyon katsayısı kullanılmıştır.
+
+Ortalama yakıt tüketimi değişkenlerinin, şehir içi ve şehir dışı yakıt tüketimi değişkenlerinden türetilmesi dolayısıyla aralarındaki yüksek korelasyon olduğu görülmüştür. Bu değişkenler arasında çoklu bağlantı problemi olması da beklenmektedir.
+
+Bunun yanında araçların motor hacimleri, silindir sayıları gibi etkenlerin de yakıt tüketimiyle ilişkili oldu bilindiğinden değişkenler arasındaki yüksek korelasyon olması doğaldır.
+
+Yakıt tüketimi yüksek olan araçların karbondiyoksit değerlendirme puanının düşük olması, karbondiyoksit emisyon oranının da yüksek olması yine beklendiğinden, aralarındaki yüksek korelasyon durumu doğaldır.
+
+```{r}
+inv_corr_quan<-inv(corr_quan$corr)
+inv_corr_quan2<-as.data.frame(inv_corr_quan)
+inv_corr_quan2
+```
+
+Ters Korelasyon matrisi verilmiştir. Burada köşegen elemanlar varyans şişme değerlerini ifade etmektedir. Varyans şişme değerlerine bakıldığında, bu değerlerin 5'den büyük olması durumu çoklu bağlantı problemine işaret eder.
+
+Yukarıda belirtildiği gibi değişkenler arasında çoklu bağlantı problemi olduğu aşikardır.
+
+## Encoding
+Algoritmaların doğru çalışabilmesi için kategorik değişkenler kodlanacaktır.
+
+```{r}
+data2<-data
+lbl = LabelEncoder$new()
+data2$`Vehicle Class`=lbl$fit_transform(data2$`Vehicle Class`)
+data2$Transmission=lbl$fit_transform(data2$Transmission)
+data2$TransmissionType=lbl$fit_transform(data2$TransmissionType)
+
+encode_ordinal <- function(x, order = unique(x)) {
+  x <- as.numeric(factor(x, levels = order, exclude = NULL))
+  x
+}
+data2$`Fuel Type`<-encode_ordinal(data2$`Fuel Type`)
+
+
+data2$TransmissionType<-as.factor(data2$TransmissionType)
+data2$`Vehicle Class`<-as.factor(data2$`Vehicle Class`)
+data2$`Fuel Type`<-as.factor(data2$`Fuel Type`)
+data2$Transmission<-as.factor(data2$Transmission)
+```
+
+Veri setinin bir kopyası oluşturulup bu kopya üzerinden işlem yapılmıştır. Bu yeni kopya üzerinde yapılan etiketlemeler şöyledir.
+
+vehicle class:
+  0. compact
+
+1. full-size
+
+2. mid-size
+
+3. minicompact
+
+4. minivan
+
+5. pickup truck: small
+
+6. pickup truck: standart
+
+7. special purpose vehicle
+
+8. station wagon: mid-size
+
+9. station wagon: small
+
+10. subcompact
+
+11. SUV: small
+
+12. SUV: standart
+
+
+transmission:
+  
+  0: A10
+
+1: A6
+
+2: A7
+
+3: A8
+
+4: A9
+
+5: AM6
+
+6: AM7
+
+7: AM8
+
+8: AS10
+
+9: AS5
+
+10: AS6
+
+11: AS7
+
+12. AS8
+
+13: AS9
+
+14: AV
+
+15: AV1
+
+16: AV10
+
+17: AV6
+
+18: AV7
+
+19: AV8
+
+20: M5
+
+21: M6
+
+22: M7
+
+
+fuel type:
+  
+  1: hibrit(x)
+
+2: benzin(z)
+
+
+transmissiyonType:
+  
+  0: A
+
+1: AM
+
+2: AS
+
+3: AV
+
+4: M
+
+
+# Kümeleme
+##Hiyerarşik Kümeleme
+
+K-Means yöntemine geçmeden önce Hiyerarşik Kümeleme ile küme sayısına karar verilecektir.
+Aralarında yüksek korelasyon olduğu için 2 nicel değişken seçilmiştir. Bu nicel değişkenler motor hacmi ve ortalama yakıt tüketimidir.
+
+```{r}
+kumeleme<-data2[,c(3,4,7,10,13,15)]
+kumeleme<-as.data.frame(kumeleme)
+distances<-dist(kumeleme, method = "euclidean")
+fit<- hclust(distances, method = "ward.D")
+dend<-as.dendrogram(fit)
+plot(color_branches(dend, k=4))
+
+```
+
+Dendograma bakarak 4 kümeye ayırmanın uygun olduğu görülmüştür.
+```{r}
+colSums(is.na(kumeleme))
+```
+
+## K-Means
+
+```{r}
+set.seed(170599)
+fviz_nbclust(kumeleme, kmeans, method = "wss")
+km_result <- kmeans(kumeleme,4, iter.max=20, algorithm="Lloyd")
+t(km_result$centers)
+```
+
+Yukarıda küme merkezleri ve o kümelerdeki gözlemlerin aldıkları değerlerin ortalamaları verilmiştir.
+
+Araçların en genelde ortalama yakıt tüketimi fazla ve az olanlar olarak 2'ye ayrılıp, daha sonra da diğer özelliklerine göre bu 2 kümenin de 2'ye ayrıldığı söylenebilir.
+
+1. ve 2. kümede yakıt tüketimi düşük araçların, 3. ve 4. kümede ise yakıt tüketimi yüksek araçların kümelendiği görülmüştür.
+
+Ortalama yakıt tüketimi en yüksek küme 3. küme olmuştur. Kümedeki araçların ortalama yakıt tüketimlerinin ortalamasının 13.33 lt olduğu görülmüştür. Bu kümedeki araçların motor hacimleri ortalama 4.14 litre iken karbondioksit değerlendirme puanı ise 3.30 olduğu görülmüştür.
+
+Ortalama yakıt tüketimi yüksek olan diğer küme ise 4. kümedir. Bu kümede ise araçların yakıt tüketiminin ortalama 12.96 lt olduğu görülmüştür. Bu kümedeki araçların motor hacimleri ortalama 4.13 lt ve karbondioksit değerlendirme puanı ortalaması 3.47 ile değerlendirmesi en kötü olan araçların olduğu kümedir.
+
+2. küme ise yakıt tüketimi düşük kümelerin fazla yakan kümesi olmuştur. Bu kümedeki araçların yakıt tüketim ortalaması 9.20 lt olduğu görülmüştür. Küme, hacim bakımından en küçük motorlu araçları içermektedir. Araçların ortalama motor hacmi 2.20 lt'dir. Karbondioksit değerlendirme puanı ise 5.46 ile bu değişkene göre 2. en iyi kümedir.
+
+1. küme ise yakıt tüketimi en düşük araçların olduğu küme olmuştur. Bu kümedeki araçların yakıt tüketimi ortalaması 8.30 lt'dir. Bu değer ile en az yakan küme olduğu görülmüştür. Kümedeki araçların motor hacimleri ortalama 2.22 lt'dir. Karbondioksit değerlendirme puanı 6.12'dir ki bu karbondioksit salınımı bakımından en iyi küme olduğunu gösterir.
+
+
+
+```{r}
+kumeleme$clusters<-km_result$cluster
+kumeleme$clusters<-as.factor(kumeleme$clusters)
+
+cluster1<-which(kumeleme$clusters==1)
+cluster2<-which(kumeleme$clusters==2)
+cluster3<-which(kumeleme$clusters==3)
+cluster4<-which(kumeleme$clusters==4)
+
+cluster11<-kumeleme[cluster1,]
+cluster22<-kumeleme[cluster2,]
+cluster33<-kumeleme[cluster3,]
+cluster44<-kumeleme[cluster4,]
+```
+
+```{r, warning=FALSE}
+freq(cluster11[,c(1,3,6)])
+```
+
+1. kümedeki araçların kategorik değişkenler bakımından frekansı verilmiştir. Araçların %43'ünün geniş hacimli sedan tipteki araçlar ve %34'ünün de küçük hacimli sedan tipteki araçlar olduğu görülmüştür.  Bu araçların %57'sinin benzinli, %47'sinin ise hibrittir. Aynı zamanda araçların %37'sinin şanzımanı sıralı iken, %24' CVT olduğu görülmüştür.
+
+
+```{r warning=FALSE}
+freq(cluster22[,c(1,3,6)])
+```
+
+2. Kümedeki araçların kategorik değişkenlerdeki frekansları verilmiştir. Bu kümedeki araçların %58'inin küçük SUV tipindeki araçlar ve %20'sinin orta hacimli sedan araçlar olduğu görülmüştür. Araçların %61'inin benzinli %38'inin ise hibrit olduğu görülmüştür. Araçların %39'u sıralı şanzımana sahipken, %21'i de otomatik şanzımanlıdır.
+
+
+
+```{r, warning=FALSE}
+freq(cluster33[,c(1,3,6)])
+```
+
+3. yani yakıt tüketimi en yüksek olan kümedeki araçların kategorik değişkenlerdeki frekansları verilmiştir. Kümedeki araçların %61'inin büyük SUV, %23'ünün ise küçük SUV olduğu görülmüştür. Araçların %58'i hibritken, %41'i benzinlidir ve araçların %57'si sıralı şanzımanlıyken, %33'ü otomatik şanzımanlıdır.
+
+
+```{r, warning=FALSE}
+freq(cluster44[,c(1,3,6)])
+```
+
+4. Kümedeki araçların kategorik değişkenlerdeki frekansları verilmiştir. Bu kümedeki araçlarınsa %38'inin büyük hacimli kamyonet oldukları görülmüştür. Kümedeki araçların %55'inin benzinli ve %45'inin de hibrit olduğu görülmüştür. Araçların %42'si otomatik ve %30'u da sıralı şanzımana sahiptir.
+
+
+
+```{r}
+clusplot(kumeleme, km_result$cluster, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,
+         labels=4, lines=0)
+```
+
+Kümelemenin %68'ini açıklayan 2 değişkene göre gözlemlerin saçılımı verilmiştir. Burada 1. ve 3. kümenin birbirlerine göre ayrık iken diğer kümelerin birbirleriyle ortak özellikleri olduğu anlaşılır.
+
+
+```{r, warning=FALSE}
+data2$clusters<-km_result$cluster
+data2$clusters<-as.factor(data2$clusters)
+freq(data2$clusters)
+```
+
+Kümeleme analizi sonucunda gözlemlerin kümelere dağılım frekansları bu şekildedir. En fazla gözlem 2. kümeye en az gözlem ise 3. kümeye atanmıştır. 
+
+
+
+# Sınıflama-Karar Ağacı
+
+Karar ağacı modelinde kullanılmayacağı için Transmission, Şehir içi yakıt tüketimi, Şehir dışı yakıt tüketimi ve ortalama yakıt tüketimi (mpg) çıkarılmış ve denetimli bir yöntem olduğu için veri eğitim (%70) ve test(%30) olmak üzere ikiye bölünmüştür.
+
+
+```{r}
+data3<-data[,-c(6,8,9,11)]
+colnames(data3)= c("Make","Model","VehicleClass","EngineSize","Cylinders","FuelType","FuelConsComp","CO2Emission","CO2Rating","SmogRating","TransmissionType")
+
+set.seed(17051999)
+trainIndex<-sample(1:nrow(data3),size = round(0.7*nrow(data3)), replace = FALSE)
+train_data<-data3[trainIndex,]
+test_data<-data3[-trainIndex,]
+
+```
+
+```{r}
+tree2<-rpart( FuelType~ VehicleClass+ EngineSize+ Cylinders+ FuelConsComp+ CO2Emission+ CO2Rating+ SmogRating+ TransmissionType, data = train_data, method = "class")
+```
+
+
+```{r, error=TRUE, results='asis'}
+fancyRpartPlot(tree2, main = "Fuel type tree", type = 2)
+```
+
+
+Karar ağacı yöntemi kullanılarak araçları yakıt türüne göre sınıflayan bir model kurulmuştur.
+
+```{r}
+confmat_FT<-table(predict(tree2, test_data, type = "class"), test_data$FuelType)
+confmat_FT<-confmat_FT[-c(1,2),-c(1,2)]
+confusionMatrix(confmat_FT)
+
+```
+
+Kurulan model daha önce görmediği test verisi ile çalıştırılmış ve %83 doğru atama yaptığı, yani test verisindeki 255 gözlemin 213'ünün yakıt tipini doğru sınıflamıştır.
+
+Burada artık amaç modelin doğru sınıflama yüzdesini yükseltmek olduğundan ağaç budanacaktır. Ağacın budanması aşırı uyum sorununa karşı modeli düzeltmek için kullanılan yöntemlerden biridir.Ağaç budama yöntemlerinden ise biri önsel biri sonsal budamadır. Önsel budamada ağacın önceden dal ve yaprak sayıları belirtilir. Algoritma belirtilen sayıda dal ve yaprağa ulaştığında son bulur. Sonsal budamada ise ağaç tamamen oluşturulduktan sonra aşağıdan yukarıya yapraklar ve dallar budanır. Bu sayede dal ve yaprak sayısı azaltılmış olur.
+
+```{r}
+tree2_preprun<-rpart( FuelType~ VehicleClass+ EngineSize+ Cylinders+ FuelConsComp+ CO2Emission+ CO2Rating+ SmogRating+ TransmissionType, 
+                      data = train_data, method = "class",
+                      control = rpart.control(cp=0, maxdepth = 8, minsplit = 21))
+fancyRpartPlot(tree2_preprun, main = "Fuel Type Prepruned Tree",type = 2)
+```
+
+Önsel Budama yapılan model ağacı verilmiştir. 
+
+```{r}
+confmat_FT_Pre<-table(predict(tree2_preprun, test_data, type = "class"), test_data$FuelType)
+confmat_FT_Pre<-confmat_FT_Pre[-c(1,2),-c(1,2)]
+confusionMatrix(confmat_FT_Pre)
+```
+
+Önsel budama yapılan modelin Doğru atama yüzdesinin %83'ten %86'ya çıktığı görülmüştür. Model test verisindeki 255 gözlemin 220'sini doğru sınıflandırmıştır.
+
+
+
+# Tahminleme-Karar ağacı
+
+Bu sefer ise gözlemlerin ortalama yakıt tüketimi tahminlenmek istenmektedir. Bu tahminleme de Karar ağacı yöntemi kullanılarak yapılacaktır.
+
+```{r}
+tree3<-rpart( FuelConsComp~ VehicleClass +EngineSize+ Cylinders+ FuelType+ TransmissionType, data = train_data, control = rpart.control(cp=0, maxdepth = 8, minsplit = 22))
+fancyRpartPlot(tree3, type = 2, tweak=1.7, main = "Fuel Cons Comp Tree")
+```
+
+
+```{r}
+printcp(tree3)
+defaultSummary(data.frame(obs=test_data$FuelConsComp, pred=round(predict(tree3,test_data),0)))
+```
+
+
+Kurulan modelin belirtme katsayısının %79 olduğu görülmüştür. Modelin bir gözlemin ortalama yakıt tüketimi değerinin %79'unu açıklayabileceği anlamına gelmektedir.
+
+
+
+
+
+

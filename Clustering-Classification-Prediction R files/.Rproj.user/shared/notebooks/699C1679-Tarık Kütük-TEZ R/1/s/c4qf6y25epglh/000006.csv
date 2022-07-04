@@ -1,0 +1,7 @@
+"0","kumeleme<-data2[,c(3,4,7,10,13,15)]"
+"0","kumeleme<-as.data.frame(kumeleme)"
+"0","distances<-dist(kumeleme, method = ""euclidean"")"
+"0","fit<- hclust(distances, method = ""ward.D"")"
+"0","dend<-as.dendrogram(fit)"
+"0","plot(color_branches(dend, k=4))"
+"0",""

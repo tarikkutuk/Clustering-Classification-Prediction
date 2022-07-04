@@ -1,0 +1,5 @@
+"0","quantitatives<-data[,c(4,5,8,9,10,11,12,13)]"
+"0","colnames(quantitatives)[3]<-""Fuel_cons_city"""
+"0","colnames(quantitatives)[4]<-""Fuel_cons_hwy"""
+"0","colnames(quantitatives)[5]<-""Fuel_cons_comb_L"""
+"0","colnames(quantitatives)[6]<-""Fuel_cons_comb_mpg"""

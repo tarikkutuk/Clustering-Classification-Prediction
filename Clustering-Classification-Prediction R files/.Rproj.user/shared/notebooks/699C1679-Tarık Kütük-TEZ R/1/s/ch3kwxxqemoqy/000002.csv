@@ -1,0 +1,3 @@
+"0","two_seater<-which(data$`Vehicle Class` ==""Two-seater"")"
+"0","data<-data[-two_seater,]"
+"0","data2<-data"

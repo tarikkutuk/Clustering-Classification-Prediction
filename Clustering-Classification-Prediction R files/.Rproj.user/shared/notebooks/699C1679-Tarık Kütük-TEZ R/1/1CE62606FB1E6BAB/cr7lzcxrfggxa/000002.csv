@@ -1,0 +1,3 @@
+"0","inv_corr_quan<-inv(corr_quan$corr)"
+"0","inv_corr_quan2<-as.data.frame(inv_corr_quan)"
+"0","inv_corr_quan2"
