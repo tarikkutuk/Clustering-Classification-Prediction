@@ -19,7 +19,7 @@ Engine Size: Araçların motor hacimleri
 
 Cylinders: Araçların motorlarında kaç silindir olduğu bilgisi
 
-Transmission: Araçların şanzıman tipi ve vites sayısı
+Transmission: Araçların şanzıman tipi ve vites sayısı (bu değişken parçalanarak (transmissiontype isimli yeni bir değişken oluşturulmuştur, bu değişkende araçların yalnızca şanzıman tipi değerleri bulunmaktadır.)
 
 Fuel type: Araçların yakıt tipi: x:hibrit z:benzin e: elektrikli d:dizel
 
@@ -35,3 +35,7 @@ Fuel Consumption(Comb (mpg)): Araçların 1 galon yakıt ile alabildikleri yol (
 CO2 Rating: Karbondioksit değerlendirme puanı
 
 Smog Rating: Egzoz gazı değerlendirme puanı
+
+TransmissionType: Araçların şanzıman tipi 
+(a: otomatik, m: manuel, av: cvt, as: sıralı(çift kavramalı), am: yarı otomatik)
+
