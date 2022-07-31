@@ -1,3 +1,0 @@
-"0","clusplot(kumeleme, km_result$cluster, main='2D representation of the Cluster solution',"
-"0","         color=TRUE, shade=TRUE,"
-"0","         labels=4, lines=0)"

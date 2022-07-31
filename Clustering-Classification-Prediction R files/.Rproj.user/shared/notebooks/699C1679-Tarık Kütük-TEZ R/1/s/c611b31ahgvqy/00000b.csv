@@ -1,3 +1,0 @@
-"0","data2$clusters<-km_result$cluster"
-"0","data2$clusters<-as.factor(data2$clusters)"
-"0","freq(data2$clusters)"

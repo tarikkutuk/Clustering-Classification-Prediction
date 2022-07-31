@@ -1,4 +1,0 @@
-"0","tree2_preprun<-rpart( FuelType~ VehicleClass+ EngineSize+ Cylinders+ FuelConsComp+ CO2Emission+ CO2Rating+ SmogRating+ TransmissionType, "
-"0","                      data = train_data, method = ""class"","
-"0","                      control = rpart.control(cp=0, maxdepth = 8, minsplit = 21))"
-"0","fancyRpartPlot(tree2_preprun, main = ""Fuel Type Prepruned Tree"",type = 2)"
